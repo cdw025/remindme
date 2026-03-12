@@ -48,23 +48,26 @@
 	}
 
 	async function createReminder() {
-		if (!label || !phone || !scheduledAt) return;
+		if (!label || !scheduledAt) return;
+		if (!defaultPhone) {
+			error = 'Please set a default phone number in Settings first.';
+			settingsOpen = true;
+			return;
+		}
 		loading = true;
 		error = '';
 		try {
-			// Convert datetime-local (no timezone) to a full ISO string using browser's local timezone
 			const localDate = new Date(scheduledAt);
 			const res = await fetch('/api/reminders', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ label, phone, scheduledAt: localDate.toISOString() })
+				body: JSON.stringify({ label, phone: defaultPhone, scheduledAt: localDate.toISOString() })
 			});
 			if (!res.ok) {
 				const data = await res.json();
 				error = data.error ?? 'Failed to create reminder.';
 			} else {
 				label = '';
-				phone = '';
 				scheduledAt = '';
 				await fetchReminders();
 			}
@@ -157,10 +160,6 @@
 			<label>
 				What's the reminder for?
 				<input bind:value={label} type="text" placeholder="Take your medication" required />
-			</label>
-			<label>
-				Your phone number
-				<input bind:value={phone} type="tel" placeholder="+15555550100" required />
 			</label>
 			<label>
 				When should we call?
