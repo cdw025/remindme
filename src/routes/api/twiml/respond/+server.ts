@@ -7,48 +7,45 @@ import OpenAI from 'openai';
 
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
+function twimlSay(text: string): Response {
+	return new Response(
+		`<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  <Say voice="Polly.Salli">${escapeXml(text)}</Say>\n</Response>`,
+		{ headers: { 'Content-Type': 'text/xml' } }
+	);
+}
+
 // Twilio POSTs here with SpeechResult after the caller speaks.
 export const POST: RequestHandler = async ({ request, url }) => {
-	const formData = await request.formData();
-	const speech = (formData.get('SpeechResult') as string) ?? '';
-	const id = parseInt(url.searchParams.get('id') ?? '');
-	const label = url.searchParams.get('label') ?? 'your reminder';
+	try {
+		const formData = await request.formData();
+		const speech = (formData.get('SpeechResult') as string) ?? '';
+		const id = parseInt(url.searchParams.get('id') ?? '');
 
-	let replyText = "Sorry, I didn't understand that. Goodbye!";
+		console.log('respond called — speech:', speech, 'id:', id);
 
-	if (speech && !isNaN(id)) {
+		if (!speech) return twimlSay("I didn't catch that. Goodbye!");
+		if (isNaN(id)) return twimlSay("Something went wrong. Goodbye!");
+
 		const intent = await parseIntent(speech);
+		console.log('intent:', JSON.stringify(intent));
 
 		if (intent.action === 'dismiss') {
-			replyText = 'Got it! Reminder dismissed. Have a great day!';
-			// Already marked fired by cron — nothing more to do.
+			return twimlSay('Got it! Reminder dismissed. Have a great day!');
 		} else if (intent.action === 'snooze') {
 			const minutes = intent.minutes ?? 5;
 			const newTime = new Date(Date.now() + minutes * 60 * 1000);
-			await db
-				.update(reminders)
-				.set({ scheduledAt: newTime, fired: false })
-				.where(eq(reminders.id, id));
-			replyText = `Got it! I'll call you back in ${minutes} minute${minutes === 1 ? '' : 's'}.`;
+			await db.update(reminders).set({ scheduledAt: newTime, fired: false }).where(eq(reminders.id, id));
+			return twimlSay(`Got it! I'll call you back in ${minutes} minute${minutes === 1 ? '' : 's'}.`);
 		} else if (intent.action === 'reschedule' && intent.scheduledAt) {
-			await db
-				.update(reminders)
-				.set({ scheduledAt: intent.scheduledAt, fired: false })
-				.where(eq(reminders.id, id));
-			replyText = `Done! I've rescheduled your reminder. Goodbye!`;
+			await db.update(reminders).set({ scheduledAt: intent.scheduledAt, fired: false }).where(eq(reminders.id, id));
+			return twimlSay("Done! I've rescheduled your reminder. Goodbye!");
 		} else {
-			replyText = "Sorry, I didn't understand that. You can say got it, snooze, or reschedule. Goodbye!";
+			return twimlSay("Sorry, I didn't understand. You can say got it, snooze, or reschedule. Goodbye!");
 		}
+	} catch (err) {
+		console.error('respond error:', err);
+		return twimlSay('Sorry, something went wrong. Goodbye!');
 	}
-
-	const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say voice="Polly.Salli">${escapeXml(replyText)}</Say>
-</Response>`;
-
-	return new Response(twiml, {
-		headers: { 'Content-Type': 'text/xml' }
-	});
 };
 
 type Intent =
