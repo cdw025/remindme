@@ -3,7 +3,7 @@ import { PUBLIC_BASE_URL } from '$env/static/public';
 
 // Twilio calls this URL when the outbound call is answered.
 // It returns TwiML XML telling Twilio what to say, then listens for a spoken response.
-export const GET: RequestHandler = async ({ url }) => {
+function handleTwiml(url: URL): Response {
 	const label = url.searchParams.get('label') ?? 'your reminder';
 	const id = url.searchParams.get('id') ?? '';
 	const name = url.searchParams.get('name') ?? '';
@@ -28,7 +28,10 @@ export const GET: RequestHandler = async ({ url }) => {
 	return new Response(twiml, {
 		headers: { 'Content-Type': 'text/xml' }
 	});
-};
+}
+
+export const GET: RequestHandler = async ({ url }) => handleTwiml(url);
+export const POST: RequestHandler = async ({ url }) => handleTwiml(url);
 
 function escapeXml(str: string): string {
 	return str
