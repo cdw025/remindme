@@ -2,16 +2,24 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/db/index';
 import { reminders } from '$lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, desc, count } from 'drizzle-orm';
 
-// GET /api/reminders — list all reminders, newest first
-export const GET: RequestHandler = async () => {
-	const all = await db
+const PAGE_SIZE = 10;
+
+// GET /api/reminders — list most recent reminders, newest first
+export const GET: RequestHandler = async ({ url }) => {
+	const page = Math.max(0, parseInt(url.searchParams.get('page') ?? '0'));
+
+	const [{ total }] = await db.select({ total: count() }).from(reminders);
+
+	const items = await db
 		.select()
 		.from(reminders)
-		.orderBy(reminders.scheduledAt);
+		.orderBy(desc(reminders.scheduledAt))
+		.limit(PAGE_SIZE)
+		.offset(page * PAGE_SIZE);
 
-	return json(all);
+	return json({ items, total, page, pageSize: PAGE_SIZE });
 };
 
 // POST /api/reminders — create a new reminder

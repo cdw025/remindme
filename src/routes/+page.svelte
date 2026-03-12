@@ -34,9 +34,13 @@
 	let editPhone = $state('');
 	let editScheduledAt = $state('');
 
+	let totalReminders = $state(0);
+
 	async function fetchReminders() {
 		const res = await fetch('/api/reminders');
-		reminders = await res.json();
+		const data = await res.json();
+		reminders = data.items ?? data;
+		totalReminders = data.total ?? reminders.length;
 	}
 
 	async function createReminder() {
@@ -154,7 +158,12 @@
 	</section>
 
 	<section class="card">
-		<h2>Your Reminders</h2>
+		<div class="reminders-header">
+			<h2>Your Reminders</h2>
+			{#if totalReminders > reminders.length}
+				<span class="count-note">showing {reminders.length} of {totalReminders}</span>
+			{/if}
+		</div>
 		{#if reminders.length === 0}
 			<p class="empty">No reminders yet. Create one above!</p>
 		{:else}
@@ -428,5 +437,21 @@
 	.edit-actions {
 		display: flex;
 		gap: 0.4rem;
+	}
+
+	.reminders-header {
+		display: flex;
+		align-items: baseline;
+		gap: 0.75rem;
+		margin-bottom: 1rem;
+	}
+
+	.reminders-header h2 {
+		margin: 0;
+	}
+
+	.count-note {
+		font-size: 0.8rem;
+		color: #a0aec0;
 	}
 </style>
