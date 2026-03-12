@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { Badge } from '$lib/components/ui/badge';
 
 	type Reminder = {
 		id: number;
@@ -121,337 +126,92 @@
 		loadSettings();
 		fetchReminders();
 	});
-
 </script>
 
 <svelte:head>
 	<title>RemindMe</title>
 </svelte:head>
 
-<main>
-	<div class="top-bar">
+<main class="mx-auto max-w-2xl px-4 py-6 sm:py-8">
+	<div class="mb-6 flex items-start justify-between gap-3">
 		<div>
-			<h1>RemindMe</h1>
-			<p class="subtitle">Schedule a reminder — we'll call you when it's time.</p>
+			<h1 class="text-2xl font-bold tracking-tight sm:text-3xl">RemindMe</h1>
+			<p class="mt-1 text-sm text-muted-foreground">Schedule a reminder — we'll call you when it's time.</p>
 		</div>
-		<a href="/settings" class="btn-settings">⚙ Settings</a>
+		<a href="/settings" class="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md border border-input bg-card px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground">⚙ Settings</a>
 	</div>
 
-	<section class="card">
-		<h2>New Reminder</h2>
-		<form onsubmit={(e) => { e.preventDefault(); createReminder(); }}>
-			<label>
-				What's the reminder for?
-				<input bind:value={label} type="text" placeholder="Take your medication" required />
-			</label>
-			<label>
-				When should we call?
-				<input bind:value={scheduledAt} type="datetime-local" min={nowLocal()} required />
-			</label>
-			{#if error}
-				<p class="error">{error}</p>
-			{/if}
-			<button type="submit" disabled={loading}>
-				{loading ? 'Saving…' : 'Schedule Reminder'}
-			</button>
-		</form>
-	</section>
+	<Card class="mb-6">
+		<CardHeader>
+			<CardTitle class="text-lg">New Reminder</CardTitle>
+		</CardHeader>
+		<CardContent>
+			<form onsubmit={(e) => { e.preventDefault(); createReminder(); }} class="flex flex-col gap-4">
+				<div class="flex flex-col gap-2">
+					<Label for="reminder-label">What's the reminder for?</Label>
+					<Input id="reminder-label" bind:value={label} type="text" placeholder="Take your medication" required />
+				</div>
+				<div class="flex flex-col gap-2">
+					<Label for="reminder-time">When should we call?</Label>
+					<Input id="reminder-time" bind:value={scheduledAt} type="datetime-local" min={nowLocal()} required />
+				</div>
+				{#if error}
+					<p class="text-sm text-destructive">{error}</p>
+				{/if}
+				<Button type="submit" disabled={loading} class="self-start">
+					{loading ? 'Saving…' : 'Schedule Reminder'}
+				</Button>
+			</form>
+		</CardContent>
+	</Card>
 
-	<section class="card">
-		<div class="reminders-header">
-			<h2>Your Reminders</h2>
-			{#if totalReminders > reminders.length}
-				<span class="count-note">showing {reminders.length} of {totalReminders}</span>
-			{/if}
-		</div>
-		{#if reminders.length === 0}
-			<p class="empty">No reminders yet. Create one above!</p>
-		{:else}
-			<ul class="reminder-list">
-				{#each reminders as r (r.id)}
-					<li class:fired={r.fired}>
-						{#if editingId === r.id}
-							<div class="edit-form">
-								<input bind:value={editLabel} type="text" />
-								<input bind:value={editPhone} type="tel" />
-								<input bind:value={editScheduledAt} type="datetime-local" />
-								<div class="edit-actions">
-								<button onclick={() => saveEdit(r.id)} class="btn-save">Save</button>
-								<button onclick={cancelEdit} class="btn-cancel">Cancel</button>
+	<Card>
+		<CardHeader>
+			<div class="flex items-baseline gap-3">
+				<CardTitle class="text-lg">Your Reminders</CardTitle>
+				{#if totalReminders > reminders.length}
+					<span class="text-xs text-muted-foreground">showing {reminders.length} of {totalReminders}</span>
+				{/if}
+			</div>
+		</CardHeader>
+		<CardContent>
+			{#if reminders.length === 0}
+				<p class="py-4 text-center text-muted-foreground">No reminders yet. Create one above!</p>
+			{:else}
+				<ul class="flex flex-col gap-3">
+					{#each reminders as r (r.id)}
+						<li class="flex flex-col gap-2 rounded-lg bg-muted/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 {r.fired ? 'opacity-60' : ''}">
+							{#if editingId === r.id}
+								<div class="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap">
+									<Input bind:value={editLabel} type="text" class="sm:min-w-[120px] sm:flex-1" />
+									<Input bind:value={editPhone} type="tel" class="sm:min-w-[120px] sm:flex-1" />
+									<Input bind:value={editScheduledAt} type="datetime-local" class="sm:min-w-[120px] sm:flex-1" />
+									<div class="flex gap-2">
+										<Button size="sm" variant="outline" onclick={() => saveEdit(r.id)}>Save</Button>
+										<Button size="sm" variant="ghost" onclick={cancelEdit}>Cancel</Button>
+									</div>
 								</div>
-							</div>
-						{:else}
-							<div class="reminder-info">
-								<span class="reminder-label">{r.label}</span>
-								<span class="reminder-meta">
-									{formatDate(r.scheduledAt)} · {r.phone}
-								</span>
-							</div>
-							<div class="reminder-actions">
-								{#if r.fired}
-									<span class="badge fired">Called ✓</span>
-								{:else}
-									<span class="badge pending">Pending</span>
-									<button onclick={() => startEdit(r)} class="btn-edit">Edit</button>
-								{/if}
-								<button onclick={() => deleteReminder(r.id)} class="btn-delete">Delete</button>
-							</div>
-						{/if}
-					</li>
-				{/each}
-			</ul>
-		{/if}
-	</section>
+							{:else}
+								<div class="flex min-w-0 flex-col gap-0.5">
+									<span class="truncate font-semibold">{r.label}</span>
+									<span class="text-xs text-muted-foreground">
+										{formatDate(r.scheduledAt)} · {r.phone}
+									</span>
+								</div>
+								<div class="flex shrink-0 items-center gap-2">
+									{#if r.fired}
+										<Badge variant="secondary" class="bg-emerald-900/40 text-emerald-400">Called ✓</Badge>
+									{:else}
+										<Badge variant="secondary" class="bg-sky-900/40 text-sky-400">Pending</Badge>
+										<Button size="sm" variant="ghost" class="text-sky-400 hover:text-sky-300" onclick={() => startEdit(r)}>Edit</Button>
+									{/if}
+									<Button size="sm" variant="ghost" class="text-destructive hover:text-destructive" onclick={() => deleteReminder(r.id)}>Delete</Button>
+								</div>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</CardContent>
+	</Card>
 </main>
-
-<style>
-	:global(body) {
-		margin: 0;
-		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-		background: #f0f4f8;
-		color: #1a202c;
-	}
-
-	main {
-		max-width: 640px;
-		margin: 2rem auto;
-		padding: 0 1rem;
-	}
-
-	h1 {
-		font-size: 2rem;
-		font-weight: 700;
-		margin: 0;
-	}
-
-	.top-bar {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		margin-bottom: 0;
-	}
-
-	.btn-settings {
-		background: none;
-		border: 1px solid #e2e8f0;
-		border-radius: 8px;
-		padding: 0.4rem 0.8rem;
-		font-size: 0.85rem;
-		cursor: pointer;
-		color: #4a5568;
-		margin-top: 0.4rem;
-		text-decoration: none;
-	}
-
-	.btn-settings:hover {
-		background: #f7fafc;
-	}
-
-	.subtitle {
-		color: #718096;
-		margin: 0.25rem 0 1.5rem;
-	}
-
-	.card {
-		background: white;
-		border-radius: 12px;
-		padding: 1.5rem;
-		margin-bottom: 1.5rem;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-	}
-
-	h2 {
-		margin: 0 0 1rem;
-		font-size: 1.1rem;
-		font-weight: 600;
-	}
-
-	form {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-
-	label {
-		display: flex;
-		flex-direction: column;
-		gap: 0.3rem;
-		font-size: 0.875rem;
-		font-weight: 500;
-		color: #4a5568;
-	}
-
-	input {
-		padding: 0.5rem 0.75rem;
-		border: 1px solid #e2e8f0;
-		border-radius: 8px;
-		font-size: 1rem;
-		outline: none;
-		transition: border-color 0.15s;
-	}
-
-	input:focus {
-		border-color: #667eea;
-	}
-
-	button[type='submit'] {
-		margin-top: 0.5rem;
-		padding: 0.6rem 1.25rem;
-		background: #667eea;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		font-size: 0.95rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: background 0.15s;
-	}
-
-	button[type='submit']:hover:not(:disabled) {
-		background: #5a67d8;
-	}
-
-	button[type='submit']:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.error {
-		color: #e53e3e;
-		font-size: 0.875rem;
-		margin: 0;
-	}
-
-	.empty {
-		color: #a0aec0;
-		text-align: center;
-		padding: 1rem 0;
-	}
-
-	.reminder-list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-
-	li {
-		background: #f7fafc;
-		border-radius: 8px;
-		padding: 0.75rem 1rem;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	li.fired {
-		opacity: 0.6;
-	}
-
-	.reminder-info {
-		display: flex;
-		flex-direction: column;
-		gap: 0.2rem;
-	}
-
-	.reminder-label {
-		font-weight: 600;
-	}
-
-	.reminder-meta {
-		font-size: 0.8rem;
-		color: #718096;
-	}
-
-	.reminder-actions {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		flex-shrink: 0;
-	}
-
-	.badge {
-		font-size: 0.75rem;
-		padding: 0.2rem 0.5rem;
-		border-radius: 999px;
-		font-weight: 600;
-	}
-
-	.badge.pending {
-		background: #ebf8ff;
-		color: #2b6cb0;
-	}
-
-	.badge.fired {
-		background: #f0fff4;
-		color: #276749;
-	}
-
-	.btn-edit,
-	.btn-delete,
-	.btn-save,
-	.btn-cancel {
-		padding: 0.3rem 0.7rem;
-		border-radius: 6px;
-		font-size: 0.8rem;
-		font-weight: 500;
-		border: none;
-		cursor: pointer;
-	}
-
-	.btn-edit {
-		background: #ebf8ff;
-		color: #2b6cb0;
-	}
-
-	.btn-delete {
-		background: #fff5f5;
-		color: #c53030;
-	}
-
-	.btn-save {
-		background: #f0fff4;
-		color: #276749;
-	}
-
-	.btn-cancel {
-		background: #f7fafc;
-		color: #4a5568;
-	}
-
-	.edit-form {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-		width: 100%;
-	}
-
-	.edit-form input {
-		flex: 1;
-		min-width: 120px;
-	}
-
-	.edit-actions {
-		display: flex;
-		gap: 0.4rem;
-	}
-
-	.reminders-header {
-		display: flex;
-		align-items: baseline;
-		gap: 0.75rem;
-		margin-bottom: 1rem;
-	}
-
-	.reminders-header h2 {
-		margin: 0;
-	}
-
-	.count-note {
-		font-size: 0.8rem;
-		color: #a0aec0;
-	}
-</style>
