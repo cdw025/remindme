@@ -11,16 +11,16 @@ export const GET: RequestHandler = async ({ url }) => {
 
 	const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="Polly.Ruth-Neural">
+  <Say voice="Polly.Salli">
     Hello! This is your RemindMe assistant. 
     Your reminder is: ${escapeXml(label)}.
   </Say>
   <Gather input="speech" action="${escapeXml(respondUrl)}" method="POST" speechTimeout="auto" language="en-US">
-    <Say voice="Polly.Ruth-Neural">
+    <Say voice="Polly.Salli">
       You can say: got it to dismiss, snooze to be called back in 5 minutes, or reschedule followed by a time.
     </Say>
   </Gather>
-  <Say voice="Polly.Ruth-Neural">I didn't catch that. Goodbye!</Say>
+  <Say voice="Polly.Salli">I didn't catch that. Goodbye!</Say>
 </Response>`;
 
 	return new Response(twiml, {
