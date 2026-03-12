@@ -7,7 +7,7 @@ export const GET: RequestHandler = async ({ url }) => {
 	const label = url.searchParams.get('label') ?? 'your reminder';
 	const id = url.searchParams.get('id') ?? '';
 
-	const respondUrl = `${PUBLIC_BASE_URL}/api/twiml/respond?id=${encodeURIComponent(id)}&label=${encodeURIComponent(label)}`;
+	const respondUrl = `${PUBLIC_BASE_URL}/api/twiml/respond?id=${encodeURIComponent(id)}&amp;label=${encodeURIComponent(label)}`;
 
 	const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -15,7 +15,7 @@ export const GET: RequestHandler = async ({ url }) => {
     Hello! This is your RemindMe assistant. 
     Your reminder is: ${escapeXml(label)}.
   </Say>
-  <Gather input="speech" action="${escapeXml(respondUrl)}" method="POST" speechTimeout="auto" language="en-US">
+  <Gather input="speech" action="${respondUrl}" method="POST" speechTimeout="auto" language="en-US">
     <Say voice="Polly.Salli">
       You can say: got it to dismiss, snooze to be called back in 5 minutes, or reschedule followed by a time.
     </Say>
