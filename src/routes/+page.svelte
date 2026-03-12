@@ -35,10 +35,12 @@
 		loading = true;
 		error = '';
 		try {
+			// Convert datetime-local (no timezone) to a full ISO string using browser's local timezone
+			const localDate = new Date(scheduledAt);
 			const res = await fetch('/api/reminders', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ label, phone, scheduledAt })
+				body: JSON.stringify({ label, phone, scheduledAt: localDate.toISOString() })
 			});
 			if (!res.ok) {
 				const data = await res.json();
@@ -78,7 +80,7 @@
 			body: JSON.stringify({
 				label: editLabel,
 				phone: editPhone,
-				scheduledAt: editScheduledAt
+				scheduledAt: new Date(editScheduledAt).toISOString()
 			})
 		});
 		if (res.ok) {
