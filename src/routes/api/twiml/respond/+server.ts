@@ -43,7 +43,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
 	const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="Polly.Joanna">${escapeXml(replyText)}</Say>
+  <Say voice="Polly.Ruth-Neural">${escapeXml(replyText)}</Say>
 </Response>`;
 
 	return new Response(twiml, {
