@@ -8,14 +8,13 @@ function handleTwiml(url: URL): Response {
 	const id = url.searchParams.get('id') ?? '';
 	const name = url.searchParams.get('name') ?? '';
 
-	const greeting = name ? `Hi ${escapeXml(name)}!` : 'Hello!';
+	const nameGreeting = name ? `Hey ${escapeXml(name)}, ` : 'Hey, ';
 	const respondUrl = `${PUBLIC_BASE_URL}/api/twiml/respond?id=${encodeURIComponent(id)}&amp;label=${encodeURIComponent(label)}`;
 
 	const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say voice="Polly.Salli">
-    ${greeting} This is your RemindMe assistant. 
-    Your reminder is: ${escapeXml(label)}.
+    ${nameGreeting}calling to remind you to ${escapeXml(label)}.
   </Say>
   <Gather input="speech" action="${respondUrl}" method="POST" speechTimeout="auto" language="en-US">
     <Say voice="Polly.Salli">
