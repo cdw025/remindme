@@ -25,7 +25,7 @@ export const GET: RequestHandler = async ({ request }) => {
 
 	for (const reminder of due) {
 		try {
-			await makeReminderCall(reminder.phone, reminder.label);
+			await makeReminderCall(reminder.phone, reminder.label, reminder.id);
 			await db.update(reminders).set({ fired: true }).where(eq(reminders.id, reminder.id));
 			results.push({ id: reminder.id, status: 'fired' });
 		} catch (err) {

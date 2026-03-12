@@ -10,10 +10,10 @@ export function getTwilioClient() {
  * Makes an outbound call to the given number.
  * Twilio will GET /api/twiml?label=... to get the TwiML script.
  */
-export async function makeReminderCall(to: string, label: string) {
+export async function makeReminderCall(to: string, label: string, id: number) {
 	const client = getTwilioClient();
 	const encodedLabel = encodeURIComponent(label);
-	const twimlUrl = `${PUBLIC_BASE_URL}/api/twiml?label=${encodedLabel}`;
+	const twimlUrl = `${PUBLIC_BASE_URL}/api/twiml?label=${encodedLabel}&id=${id}`;
 
 	const call = await client.calls.create({
 		to,
