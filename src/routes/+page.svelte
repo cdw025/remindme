@@ -21,19 +21,11 @@
 
 	// Settings
 	let defaultPhone = $state('');
-	let settingsOpen = $state(false);
-	let settingsSaved = $state(false);
+	let userName = $state('');
 
 	function loadSettings() {
 		defaultPhone = localStorage.getItem('defaultPhone') ?? '';
-		if (defaultPhone && !phone) phone = defaultPhone;
-	}
-
-	function saveSettings() {
-		localStorage.setItem('defaultPhone', defaultPhone);
-		if (!phone) phone = defaultPhone;
-		settingsSaved = true;
-		setTimeout(() => (settingsSaved = false), 2000);
+		userName = localStorage.getItem('userName') ?? '';
 	}
 
 	// Edit state
@@ -51,7 +43,6 @@
 		if (!label || !scheduledAt) return;
 		if (!defaultPhone) {
 			error = 'Please set a default phone number in Settings first.';
-			settingsOpen = true;
 			return;
 		}
 		loading = true;
@@ -61,7 +52,7 @@
 			const res = await fetch('/api/reminders', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ label, phone: defaultPhone, scheduledAt: localDate.toISOString() })
+				body: JSON.stringify({ label, phone: defaultPhone, callerName: userName, scheduledAt: localDate.toISOString() })
 			});
 			if (!res.ok) {
 				const data = await res.json();
@@ -126,6 +117,7 @@
 		loadSettings();
 		fetchReminders();
 	});
+
 </script>
 
 <svelte:head>
@@ -138,21 +130,8 @@
 			<h1>RemindMe</h1>
 			<p class="subtitle">Schedule a reminder — we'll call you when it's time.</p>
 		</div>
-		<button class="btn-settings" onclick={() => (settingsOpen = !settingsOpen)}>⚙ Settings</button>
+		<a href="/settings" class="btn-settings">⚙ Settings</a>
 	</div>
-
-	{#if settingsOpen}
-		<section class="card">
-			<h2>Settings</h2>
-			<label>
-				Default phone number
-				<input bind:value={defaultPhone} type="tel" placeholder="+15555550100" />
-			</label>
-			<button class="btn-save-settings" onclick={saveSettings}>
-				{settingsSaved ? 'Saved ✓' : 'Save'}
-			</button>
-		</section>
-	{/if}
 
 	<section class="card">
 		<h2>New Reminder</h2>
@@ -252,26 +231,11 @@
 		cursor: pointer;
 		color: #4a5568;
 		margin-top: 0.4rem;
+		text-decoration: none;
 	}
 
 	.btn-settings:hover {
 		background: #f7fafc;
-	}
-
-	.btn-save-settings {
-		margin-top: 0.75rem;
-		padding: 0.5rem 1rem;
-		background: #667eea;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		font-size: 0.9rem;
-		font-weight: 600;
-		cursor: pointer;
-	}
-
-	.btn-save-settings:hover {
-		background: #5a67d8;
 	}
 
 	.subtitle {

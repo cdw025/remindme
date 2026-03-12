@@ -18,7 +18,7 @@ export const GET: RequestHandler = async () => {
 // Body: { label: string, phone: string, scheduledAt: string (ISO) }
 export const POST: RequestHandler = async ({ request }) => {
 	const body = await request.json();
-	const { label, phone, scheduledAt } = body;
+	const { label, phone, scheduledAt, callerName } = body;
 
 	if (!label || !phone || !scheduledAt) {
 		return json({ error: 'label, phone, and scheduledAt are required.' }, { status: 400 });
@@ -31,7 +31,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	const [created] = await db
 		.insert(reminders)
-		.values({ label, phone, scheduledAt: scheduledDate, fired: false })
+		.values({ label, phone, callerName: callerName ?? '', scheduledAt: scheduledDate, fired: false })
 		.returning();
 
 	return json(created, { status: 201 });
